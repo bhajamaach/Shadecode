@@ -21,48 +21,21 @@ export function MapView() {
 
     const map = new maplibregl.Map({
       container: containerRef.current,
-      style: {
-        version: 8,
-        sources: {
-          basemap: {
-            type: "raster",
-            // Esri's free World_Dark_Gray_Base: no API key required and matches
-            // the app's dark design language. (CARTO's basemaps.cartocdn.com
-            // raster tiles — used here previously — now require an API key for
-            // anonymous requests; without one every tile silently renders an
-            // "API KEY REQUIRED" watermark instead of an error, which looked
-            // like a blank/broken map.)
-            tiles: [
-              "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}",
-            ],
-            tileSize: 256,
-            attribution: "&copy; Esri",
-          },
-        },
-        layers: [
-          // Diagnostic/fallback layer: if this shows through as solid
-          // medium-gray instead of map tiles, tiles are failing to load
-          // (network/CDN block) — if the area stays fully black even with
-          // this layer present, the canvas itself isn't rendering (WebGL).
-          { id: "fallback-bg", type: "background", paint: { "background-color": "#7a7a7a" } },
-          { id: "basemap", type: "raster", source: "basemap" },
-        ],
-      },
+      // OpenFreeMap's "positron" vector style: free, unlimited, no API key.
+      // (Both prior basemaps broke in production under real traffic: CARTO's
+      // raster tiles now require a paid API key for anonymous requests, and
+      // Esri's free World_Dark_Gray_Base throttles bursts of concurrent tile
+      // requests — the exact pattern a real page load makes — and silently
+      // serves a "Map data not yet available" placeholder tile instead of an
+      // error. OpenFreeMap is sponsored infra built specifically to have no
+      // such limits.)
+      style: "https://tiles.openfreemap.org/styles/positron",
       center: [-75.155, 39.978],
       zoom: 12.2,
     });
     mapRef.current = map;
 
-    console.log("[ShadeCode] maplibre-gl version:", maplibregl.getVersion?.());
-    const probe = document.createElement("canvas");
-    const gl = probe.getContext("webgl2") || probe.getContext("webgl");
-    console.log("[ShadeCode] WebGL context available:", !!gl, gl?.getParameter(gl.RENDERER));
-    const rect = containerRef.current.getBoundingClientRect();
-    console.log("[ShadeCode] container size:", rect.width, "x", rect.height);
-
     map.on("load", () => {
-      const canvas = map.getCanvas();
-      console.log("[ShadeCode] canvas size:", canvas.width, "x", canvas.height, "| style:", canvas.style.width, canvas.style.height);
       map.resize();
       // Real citywide sample points (from the same 450-point pipeline run that
       // fit the regression), rendered as a native MapLibre circle layer colored
