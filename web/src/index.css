@@ -1,0 +1,65 @@
+@import "tailwindcss";
+@import "maplibre-gl/dist/maplibre-gl.css";
+
+@theme {
+  --font-ui: 'Inter', -apple-system, sans-serif;
+  --font-head: 'IBM Plex Sans', 'Inter', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+
+  --color-bg: #12151a;
+  --color-paper: #f4f1ea;
+  --color-paper-dim: #e7e2d4;
+  --color-ink: #1b1d22;
+  --color-ink-soft: #565b66;
+  --color-line: #d8d2c2;
+
+  --color-heat-cool: #1b7a72;
+  --color-heat-mid: #ede7d9;
+  --color-heat-warn: #d98e2b;
+  --color-heat-hazard: #b23a2e;
+
+  --color-accent: #3e7cb1;
+
+  --color-grade-a: #1b7a72;
+  --color-grade-b: #4c9a8a;
+  --color-grade-c: #d98e2b;
+  --color-grade-d: #c8622e;
+  --color-grade-f: #b23a2e;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+  background: var(--color-bg);
+  font-family: var(--font-ui);
+  color: var(--color-ink);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+@keyframes shadecode-pulse {
+  0% {
+    box-shadow: 0 0 0 6px rgba(62, 124, 177, 0.35);
+  }
+  70% {
+    box-shadow: 0 0 0 14px rgba(62, 124, 177, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 6px rgba(62, 124, 177, 0);
+  }
+}
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  .print-fullbleed {
+    width: 100% !important;
+    overflow: visible !important;
+    background: #fff !important;
+  }
+}
