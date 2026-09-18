@@ -1,6 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useAppStore } from "./store";
-import { checkApiHealth } from "./lib/api";
 import { MapView } from "./components/MapView";
 import { ParcelPicker } from "./components/ParcelPicker";
 import { ReviewSheet } from "./components/ReviewSheet";
@@ -38,34 +37,31 @@ function MapLegend() {
 }
 
 function ClickHint() {
-  const [apiUp, setApiUp] = useState<boolean | null>(null);
+  const apiUp = useAppStore((s) => s.apiUp);
   const liveLoading = useAppStore((s) => s.liveLoading);
+  const refreshApiHealth = useAppStore((s) => s.refreshApiHealth);
 
   useEffect(() => {
-    checkApiHealth().then(setApiUp);
-    const id = setInterval(() => checkApiHealth().then(setApiUp), 15000);
+    refreshApiHealth();
+    const id = setInterval(refreshApiHealth, 15000);
     return () => clearInterval(id);
-  }, []);
+  }, [refreshApiHealth]);
 
-  if (apiUp === null) return null;
+  // Only surface this when the live-lookup API is actually reachable (i.e.
+  // running locally) — on a hosted deploy it's always offline (it depends on
+  // rasterio/gdal, which can't run on Vercel), and a banner telling visitors
+  // to run a uvicorn command they have no way to act on just looks broken.
+  if (!apiUp) return null;
 
   return (
     <div className="no-print absolute top-4 right-4 z-[5] bg-[rgba(18,21,26,0.9)] text-[11px] px-3 py-2 rounded-md border border-[#2a2f3a] max-w-[220px]">
-      {apiUp ? (
-        <span className="text-[#C7CCD6]">
-          {liveLoading ? (
-            <span className="text-[var(--color-accent)]">Reading live satellite data…</span>
-          ) : (
-            <>🛰️ Click anywhere on the map to pull real satellite + Census data for that exact point.</>
-          )}
-        </span>
-      ) : (
-        <span className="text-[#8A93A3]">
-          Live parcel API offline — start it with{" "}
-          <code className="font-[var(--font-mono)] text-[10px]">uvicorn backend.main:app --port 8000</code> to click
-          any point on the map.
-        </span>
-      )}
+      <span className="text-[#C7CCD6]">
+        {liveLoading ? (
+          <span className="text-[var(--color-accent)]">Reading live satellite data…</span>
+        ) : (
+          <>🛰️ Click anywhere on the map to pull real satellite + Census data for that exact point.</>
+        )}
+      </span>
     </div>
   );
 }

@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import type { ModelData, Parcel, SliderState } from "./types";
-import { fetchLiveParcel, LiveParcelError } from "./lib/api";
+import { checkApiHealth, fetchLiveParcel, LiveParcelError } from "./lib/api";
 
 interface AppState {
   data: ModelData | null;
@@ -11,6 +11,7 @@ interface AppState {
   liveParcels: Parcel[];
   liveLoading: boolean;
   liveError: string | null;
+  apiUp: boolean | null;
   setData: (data: ModelData) => void;
   setError: (err: string) => void;
   selectParcel: (id: string) => void;
@@ -19,6 +20,7 @@ interface AppState {
   allParcels: () => Parcel[];
   fetchLive: (lat: number, lon: number) => Promise<void>;
   dismissLiveError: () => void;
+  refreshApiHealth: () => Promise<void>;
 }
 
 export const useAppStore = create<AppState>((set, get) => ({
@@ -30,6 +32,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   liveParcels: [],
   liveLoading: false,
   liveError: null,
+  apiUp: null,
 
   setData: (data) => {
     // Start on the hottest parcel — the pitch reads instantly.
@@ -79,4 +82,6 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
 
   dismissLiveError: () => set({ liveError: null }),
+
+  refreshApiHealth: async () => set({ apiUp: await checkApiHealth() }),
 }));

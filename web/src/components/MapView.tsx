@@ -14,6 +14,7 @@ export function MapView() {
   const currentParcelId = useAppStore((s) => s.currentParcelId);
   const slider = useAppStore((s) => s.slider);
   const liveParcels = useAppStore((s) => s.liveParcels);
+  const apiUp = useAppStore((s) => s.apiUp);
 
   // Mount the map + static layers once real data is available.
   useEffect(() => {
@@ -79,6 +80,10 @@ export function MapView() {
     map.on("click", (e) => {
       // Ignore clicks that landed on an existing marker (they have their own handler).
       if ((e.originalEvent.target as HTMLElement)?.closest(".shadecode-marker")) return;
+      // The live-lookup API isn't reachable on a hosted deploy (it needs
+      // rasterio/gdal, which can't run on Vercel) — silently no-op instead of
+      // dropping a pending marker that's guaranteed to fail with an error toast.
+      if (!useAppStore.getState().apiUp) return;
       const { lat, lng } = e.lngLat;
 
       clickMarkerRef.current?.remove();
@@ -136,7 +141,7 @@ export function MapView() {
   return (
     <div
       ref={containerRef}
-      className="cursor-crosshair"
+      className={apiUp ? "cursor-crosshair" : ""}
       style={{ position: "absolute", inset: 0 }}
     />
   );
