@@ -1,8 +1,20 @@
 import { useEffect, useRef } from "react";
 import * as maplibregl from "maplibre-gl";
+import { Protocol } from "pmtiles";
+import { layers, namedFlavor } from "@protomaps/basemaps";
 import { useAppStore } from "../store";
 import { lstColor, predictDeltaLST } from "../lib/model";
 import type { Parcel } from "../types";
+
+// Self-hosted basemap: web/public/data/philly.pmtiles is a ~60MB extract
+// (built with `pmtiles extract` from Protomaps' public planet build,
+// bboxed to the Philadelphia metro) served as a static asset from this same
+// deploy — not a third-party tile API. Two different free tile providers
+// broke this app in production (CARTO started requiring a paid API key;
+// Esri throttles concurrent tile bursts and silently serves placeholder
+// tiles), so self-hosting removes that whole class of failure for good.
+const protocol = new Protocol();
+maplibregl.addProtocol("pmtiles", protocol.tile);
 
 export function MapView() {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -22,15 +34,19 @@ export function MapView() {
 
     const map = new maplibregl.Map({
       container: containerRef.current,
-      // OpenFreeMap's "positron" vector style: free, unlimited, no API key.
-      // (Both prior basemaps broke in production under real traffic: CARTO's
-      // raster tiles now require a paid API key for anonymous requests, and
-      // Esri's free World_Dark_Gray_Base throttles bursts of concurrent tile
-      // requests — the exact pattern a real page load makes — and silently
-      // serves a "Map data not yet available" placeholder tile instead of an
-      // error. OpenFreeMap is sponsored infra built specifically to have no
-      // such limits.)
-      style: "https://tiles.openfreemap.org/styles/positron",
+      style: {
+        version: 8,
+        glyphs: "https://protomaps.github.io/basemaps-assets/fonts/{fontstack}/{range}.pbf",
+        sprite: "https://protomaps.github.io/basemaps-assets/sprites/v4/dark",
+        sources: {
+          protomaps: {
+            type: "vector",
+            url: "pmtiles://" + new URL("/data/philly.pmtiles", window.location.href).href,
+            attribution: "&copy; OpenStreetMap contributors &copy; Protomaps",
+          },
+        },
+        layers: layers("protomaps", namedFlavor("dark"), { lang: "en" }),
+      },
       center: [-75.155, 39.978],
       zoom: 12.2,
     });
